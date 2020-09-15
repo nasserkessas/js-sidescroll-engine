@@ -13,7 +13,8 @@ const keyDown = {},
         37: 'left',
         38: 'up',
         39: 'right',
-        40: 'down'
+        40: 'down',
+        16: 'shift',
     };
 const colors = ["black", "green", "yellow", "orange", "orangered", "red", "blue", "purple"];
 const canvas = document.querySelector("#canvas")
@@ -22,6 +23,7 @@ const ctx = canvas.getContext("2d");
 let SpeedY = 0;
 let SpeedX = 0;
 let State = 0;
+let Run = false;
 
 let JumpBoost = 0;
 let squarex = CanvasX / 2 - Width / 2
@@ -31,6 +33,7 @@ canvas.setAttribute("width", CanvasX)
 canvas.setAttribute("height", CanvasY)
 
 const checkInput = () => {
+    if (keyDown['shift']) Run = true;
     if (keyDown['up'] || keyDown['space']) {
         jump()
     }
@@ -38,15 +41,16 @@ const checkInput = () => {
         // down code
     }
     if (keyDown['left']) {
-        move(-MoveX, 0)
+        move(-MoveX * (Run ? 2 : 1), 0)
     }
     if (keyDown['right']) {
-        move(MoveX, 0)
+        move(MoveX * (Run ? 2 : 1), 0)
     }
 };
 
 const resetInput = (key) => {
     if (key == "right" || key == "left") State = 0;
+    if (key == "shift") Run = false;
 }
 
 document.addEventListener('keydown', (e) => keyDown[keyMap[e.which]] = true);
