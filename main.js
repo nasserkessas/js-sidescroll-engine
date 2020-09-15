@@ -4,11 +4,7 @@ const Width = 20;
 const Height = 20;
 const CanvasX = 800;
 const CanvasY = 600;
-let SpeedY = 0;
-let SpeedX = 0;
-let State = 0;
 const Gravity = .1;
-const JumpHeight = 5;
 const MaxSpeed = 10;
 const keyDown = {},
     keyMap = {
@@ -19,15 +15,21 @@ const keyDown = {},
         40: 'down'
     };
 const colors = ["black", "green", "yellow", "orange", "orangered", "red", "blue", "purple"];
-
 const canvas = document.querySelector("#canvas")
-canvas.setAttribute("width", CanvasX)
-canvas.setAttribute("height", CanvasY)
 const ctx = canvas.getContext("2d");
 
+let SpeedY = 0;
+let SpeedX = 0;
+let State = 0;
 
-squarex = CanvasX / 2 - Width / 2
-squarey = CanvasY / 2 - Height / 2
+let JumpHeight = 2.5;
+let JumpBoost = 0;
+
+let squarex = CanvasX / 2 - Width / 2
+let squarey = CanvasY / 2 - Height / 2
+
+canvas.setAttribute("width", CanvasX)
+canvas.setAttribute("height", CanvasY)
 
 const checkInput = () => {
     if (keyDown['up'] || keyDown['space']) {
@@ -70,16 +72,25 @@ function move(x, y) {
 
 const jumping = () => squarey + Height < CanvasY;
 
-function jump() {
+const jump = () => {
+    
+    if (JumpBoost > 0) {
+        JumpBoost -= .2;
+        SpeedY -= .2;
+    }
+
     if (squarey + Height != CanvasY) return;
+    JumpBoost = 5;
     SpeedY = -JumpHeight;
     squarey--;
 }
 
-function redraw() {
+const redraw = () => {
+
     if (jumping()) {
 
         if (SpeedY < MaxSpeed) SpeedY += Gravity;
+
         squarey += SpeedY;
 
         if (squarey + Height + SpeedY >= CanvasY) {
