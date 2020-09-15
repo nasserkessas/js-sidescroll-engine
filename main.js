@@ -6,6 +6,7 @@ const CanvasX = 800;
 const CanvasY = 600;
 const Gravity = .1;
 const MaxSpeed = 10;
+const JumpHeight = 2.5;
 const keyDown = {},
     keyMap = {
         32: 'space',
@@ -22,9 +23,7 @@ let SpeedY = 0;
 let SpeedX = 0;
 let State = 0;
 
-let JumpHeight = 2.5;
 let JumpBoost = 0;
-
 let squarex = CanvasX / 2 - Width / 2
 let squarey = CanvasY / 2 - Height / 2
 
@@ -73,14 +72,14 @@ function move(x, y) {
 const jumping = () => squarey + Height < CanvasY;
 
 const jump = () => {
-    
+
     if (JumpBoost > 0) {
-        JumpBoost -= .2;
-        SpeedY -= .2;
+        JumpBoost -= Gravity;
+        SpeedY -= Gravity;
     }
 
     if (squarey + Height != CanvasY) return;
-    JumpBoost = 5;
+    JumpBoost = JumpHeight * 2;
     SpeedY = -JumpHeight;
     squarey--;
 }
@@ -100,8 +99,8 @@ const redraw = () => {
     }
 
     ctx.beginPath();
-    ctx.clearRect(0,0,CanvasX,CanvasY);
-    ctx.rect(squarex, squarey, Width,  Height);
+    ctx.clearRect(0, 0, CanvasX, CanvasY);
+    ctx.rect(squarex, squarey, Width, Height);
     ctx.fillStyle = colors[State];
     ctx.fill();
     checkInput();
