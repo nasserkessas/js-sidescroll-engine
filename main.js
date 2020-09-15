@@ -1,17 +1,13 @@
-const w = window.innerWidth;
-const h = window.innerHeight;
-
 const MoveX = 2;
 const MoveY = 2;
 const Width = 20;
 const Height = 20;
-const CanvasX = 600;
-const CanvasY = 360;
+const CanvasX = 800;
+const CanvasY = 600;
 let SpeedY = 0;
 let SpeedX = 0;
 let State = 0;
-const Gravity = 10;
-const FPS = 45;
+const Gravity = .1;
 const JumpHeight = 5;
 const MaxSpeed = 10;
 const keyDown = {},
@@ -24,16 +20,11 @@ const keyDown = {},
     };
 const colors = ["black", "green", "yellow", "orange", "orangered", "red", "blue", "purple"];
 
-const svgContainer = d3.select("body").append("svg")
-    .attr("width", CanvasX)
-    .attr("height", CanvasY)
-    .attr("class", "container")
+const canvas = document.querySelector("#canvas")
+canvas.setAttribute("width", CanvasX)
+canvas.setAttribute("height", CanvasY)
+const ctx = canvas.getContext("2d");
 
-const square = svgContainer.append("rect")
-    .attr("x", CanvasX / 2 - Width / 2)
-    .attr("y", CanvasY / 2 - Height / 2)
-    .attr("width", Width)
-    .attr("height", Height);
 
 squarex = CanvasX / 2 - Width / 2
 squarey = CanvasY / 2 - Height / 2
@@ -69,7 +60,7 @@ function move(x, y) {
     if (squarey + y + Height > CanvasY || squarey + y < 0) return;
 
     if (jumping()) {
-        State = colors.length-1;
+        State = colors.length - 1;
     } else {
         State = (State++ % (colors.length - 2)) + 1;
     }
@@ -88,7 +79,7 @@ function jump() {
 function redraw() {
     if (jumping()) {
 
-        if (SpeedY < MaxSpeed) SpeedY += Gravity / FPS;
+        if (SpeedY < MaxSpeed) SpeedY += Gravity;
         squarey += SpeedY;
 
         if (squarey + Height + SpeedY >= CanvasY) {
@@ -97,14 +88,14 @@ function redraw() {
         }
     }
 
-    square
-        .attr("x", squarex)
-        .attr("y", squarey)
-        // .attr("fill", `rgb(${color(squarey)},0,0)`)
-        .attr("fill", colors[State])
+    ctx.beginPath();
+    ctx.clearRect(0,0,CanvasX,CanvasY);
+    ctx.rect(squarex, squarey, Width,  Height);
+    ctx.fillStyle = colors[State];
+    ctx.fill();
     checkInput();
 
-    setTimeout(redraw, 1000 / FPS)
+    window.requestAnimationFrame(redraw);
 }
 
 const color = (y) => (1 - y / (CanvasY - Height)) * 512;
