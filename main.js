@@ -59,14 +59,12 @@ document.addEventListener('keyup', (e) => {
     resetInput(keyMap[e.which]);
 });
 
-function move(x, y) {
+const move = (x, y) => {
 
     if (squarex + x + Width > CanvasX || squarex + x < 0) return;
     if (squarey + y + Height > CanvasY || squarey + y < 0) return;
 
-    if (jumping()) {
-        State = colors.length - 1;
-    } else {
+    if (!jumping()) {
         State = (State++ % (colors.length - 2)) + 1;
     }
     squarex += x;
@@ -92,6 +90,8 @@ const redraw = () => {
 
     if (jumping()) {
 
+        State = colors.length - 1;
+
         if (SpeedY < MaxSpeed) SpeedY += Gravity;
 
         squarey += SpeedY;
@@ -99,6 +99,7 @@ const redraw = () => {
         if (squarey + Height + SpeedY >= CanvasY) {
             squarey = CanvasY - Height;
             SpeedY = 0;
+            State = 0;
         }
     }
 
