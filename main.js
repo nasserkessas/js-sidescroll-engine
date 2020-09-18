@@ -1,8 +1,8 @@
 const MOVEX = 2;
 const CANVAS = { x: 800, y: 400 };
-const GRAVITY = .1;
+const GRAVITY = .2;
 const MAXSPEED = 10;
-const JUMPHEIGHT = 2.5;
+const JUMPHEIGHT = 3.5;
 const KEYDOWN = {}
 const KEYMAP = {
     32: 'space',
@@ -29,31 +29,63 @@ const resetInput = (key) => {
     if (key == "shift") player.walk();
 }
 
-class Player {
+
+class Thing {
+
+    Width = 50;
+    Height = 50;
+    Frame = 0;
 
     constructor(x, y) {
-        this.SpeedY = 0;
-        this.SpeedX = 1;
+        this.LocX = x - this.Width;
+        this.LocY = y - this.Height;
         this.Frame = 0;
-        this.JumpBoost = 0;
-        this.Width = 20;
-        this.Height = 20;
-        this.LocX = x - this.Width / 2;
-        this.LocY = y - this.Height / 2;
-        this.Bounds = { top: 0, right: CANVAS.x, bottom: CANVAS.y, left: 0 };
     }
 
-    setBound = (bound, val) => this.Bounds[bound] = val;
+    getState() {
+        return {
+            x: this.LocX,
+            y: this.LocY,
+            w: this.Width,
+            h: this.Height,
+            fill: COLORS[this.Frame],
+        }
+    }
+}
 
-    run = () => this.SpeedX = 2;
+
+class MovingThing extends Thing {
+
+    constructor() {
+        super();
+        this.SpeedY = 0;
+        this.SpeedX = 1;
+        this.JumpBoost = 0;
+    }
+
+    run = () => this.SpeedX = 1.5;
 
     walk = () => this.SpeedX = 1;
 
     stop = () => { this.SpeedX = 1; this.Frame = 0; }
 
 
-    getBounds = () => {
+}
 
+class Player extends MovingThing {
+
+    constructor(x, y) {
+        super();
+        this.Width = 20;
+        this.Height = 20;
+        this.LocX = x - this.Width / 2;
+        this.LocY = y - this.Height / 2;
+        this.Bounds = { top: 0, right: CANVAS.x, bottom: CANVAS.y, left: 0 };
+        this.Fill = COLORS[this.Frame];
+        this.getBounds();
+    }
+
+    getBounds = () => {
         let b = { top: 0, right: CANVAS.x, bottom: CANVAS.y, left: 0 };
 
         for (let o of objects) {
@@ -81,7 +113,6 @@ class Player {
         }
 
         this.getBounds()
-        console.log(this.Bounds, this.LocX, this.LocY + this.Height);
         if (this.LocX + x + this.Width >= this.Bounds.right || this.LocX + x <= this.Bounds.left) return;
 
         if (!this.jumping()) {
@@ -113,7 +144,12 @@ class Player {
 
             if (this.SpeedY < MAXSPEED) this.SpeedY += GRAVITY;
 
-            this.LocY += Math.round(this.SpeedY);
+            if (this.LocY + Math.round(this.SpeedY) < this.Bounds.top) {
+                this.LocY = this.Bounds.top;
+                this.SpeedY = 0;
+            }
+            else
+                this.LocY += Math.round(this.SpeedY);
 
             if (this.LocY + this.Height + this.SpeedY >= this.Bounds.bottom) {
                 this.LocY = this.Bounds.bottom - this.Height;
@@ -122,40 +158,8 @@ class Player {
             }
         }
     }
-
-    getState = () => {
-        return {
-            x: this.LocX,
-            y: this.LocY,
-            w: this.Width,
-            h: this.Height,
-            fill: COLORS[this.Frame],
-        }
-    }
 }
 
-
-class Thing {
-
-    Width = 50;
-    Height = 50;
-    Fill = "orangered";
-
-    constructor(x, y) {
-        this.LocX = x - this.Width;
-        this.LocY = y - this.Height;
-    }
-
-    getState() {
-        return {
-            x: this.LocX,
-            y: this.LocY,
-            w: this.Width,
-            h: this.Height,
-            fill: this.Fill,
-        }
-    }
-}
 
 const touching = (x1, x2, x3, x4) => {
     if (x1 >= x3 && x1 <= x4) return true;
@@ -186,11 +190,12 @@ const redraw = () => {
     window.requestAnimationFrame(redraw);
 }
 
-const player = new Player(CANVAS.x / 2, CANVAS.y / 2);
 const objects = [
     new Thing(Math.round(CANVAS.x / 3), CANVAS.y),
-    new Thing(Math.round(CANVAS.x / 2), 3*  Math.round(CANVAS.y/4)),
+    new Thing(Math.round(CANVAS.x / 2), 3 * Math.round(CANVAS.y / 4)),
 ]
+
+const player = new Player(CANVAS.x / 2, CANVAS.y / 2);
 
 document.addEventListener('keydown', (e) => KEYDOWN[KEYMAP[e.which]] = true);
 document.addEventListener('keyup', (e) => {
