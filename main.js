@@ -1,5 +1,5 @@
 const MOVEX = 2;
-const CANVAS = { x: 800, y: 400 };
+const CANVAS = { x: 800, y: 450 };
 const GRAVITY = .2;
 const MAXSPEED = 10;
 const JUMPHEIGHT = 3.5;
@@ -17,9 +17,13 @@ const LEFT = 0;
 const RIGHT = 1;
 const COLORS = ["black", "green", "yellow", "orange", "orangered", "red", "blue", "purple"];
 const LEVEL = [
-    { x: 500, y: CANVAS.y },
-    { x: 600, y: 2 * CANVAS.y / 3 + 20 },
-    { x: 400, y: CANVAS.y / 2 },
+    { x: 0, y: 0, width: CANVAS.x, height: 25, color: "brown" }, //grass
+    { x: 0, y: 25, width: CANVAS.x, height: 7, color: "#60ff30" }, //ground
+    { x: 550, y: 7 / 10 * CANVAS.y, width: 100, height: 25, color: "brown" }, //platform
+    { x: 300, y: 5 / 10 * CANVAS.y, width: 75, height: 25, color: "brown" }, //platform
+    { x: 650, y: 4 / 10 * CANVAS.y, width: 150, height: 25, color: "brown" }, //platform
+    { x: 100, y: 3 / 10 * CANVAS.y, width: 100, height: 25, color: "brown" }, //platform
+    { x: 650, y: 4 / 10 * CANVAS.y + 25, width: 20, height: 20, color: "gold", type: "goal" }  //goal
 ];
 
 const checkInput = () => {
@@ -37,13 +41,14 @@ const resetInput = (key) => {
 
 class Thing {
 
-    Width = 50;
-    Height = 50;
     Frame = 0;
 
-    constructor(x, y) {
-        this.LocX = x - this.Width;
-        this.LocY = y - this.Height;
+    constructor(x, y, width, height, fill) {
+        this.Width = width;
+        this.Height = height;
+        this.LocX = x;
+        this.LocY = (CANVAS.y - y) - height;
+        this.fill = fill;
     }
 
     getState() {
@@ -52,7 +57,7 @@ class Thing {
             y: this.LocY,
             w: this.Width,
             h: this.Height,
-            fill: COLORS[this.Frame !== undefined ? this.Frame : 4],
+            fill: this.fill || COLORS[this.Frame !== undefined ? this.Frame : 4],
         }
     }
 }
@@ -115,9 +120,8 @@ class Player extends MovingThing {
         }
 
         this.getBounds()
-        // console.log(x, this.LocX, this.Bounds.left); 
 
-        if (this.LocX + this.Width + x > this.Bounds.right) x = this.Bounds.right - (this.LocX + this.Width); 
+        if (this.LocX + this.Width + x > this.Bounds.right) x = this.Bounds.right - (this.LocX + this.Width);
         if (this.LocX + x < this.Bounds.left) x = this.Bounds.left - this.LocX;
 
         if (!this.jumping()) {
@@ -189,7 +193,7 @@ const redraw = () => {
     window.requestAnimationFrame(redraw);
 }
 
-const objects = LEVEL.map(obj => new Thing(obj.x, obj.y));
+const objects = LEVEL.map(obj => new Thing(obj.x, obj.y, obj.width, obj.height, obj.color));
 
 const player = new Player(CANVAS.x / 2, CANVAS.y / 2);
 
