@@ -16,6 +16,11 @@ const KEYMAP = {
 const LEFT = 0;
 const RIGHT = 1;
 const COLORS = ["black", "green", "yellow", "orange", "orangered", "red", "blue", "purple"];
+const LEVEL = [
+    { x: 500, y: CANVAS.y },
+    { x: 600, y: 2 * CANVAS.y / 3 + 20 },
+    { x: 400, y: CANVAS.y / 2 },
+];
 
 const checkInput = () => {
     KEYDOWN['shift'] && player.run();
@@ -39,7 +44,6 @@ class Thing {
     constructor(x, y) {
         this.LocX = x - this.Width;
         this.LocY = y - this.Height;
-        this.Frame = 0;
     }
 
     getState() {
@@ -48,7 +52,7 @@ class Thing {
             y: this.LocY,
             w: this.Width,
             h: this.Height,
-            fill: COLORS[this.Frame],
+            fill: COLORS[this.Frame !== undefined ? this.Frame : 4],
         }
     }
 }
@@ -68,8 +72,6 @@ class MovingThing extends Thing {
     walk = () => this.SpeedX = 1;
 
     stop = () => { this.SpeedX = 1; this.Frame = 0; }
-
-
 }
 
 class Player extends MovingThing {
@@ -96,7 +98,7 @@ class Player extends MovingThing {
             }
             if (touching(this.LocY, this.LocY + this.Height, s.y, s.y + s.h)) {
                 if (this.LocX + this.Width <= s.x && s.x < b.right) b.right = s.x;
-                if (this.LocX > s.x + s.w && s.x + s.w >= b.left) b.left = s.x + s.w;
+                if (this.LocX >= s.x + s.w && s.x + s.w > b.left) b.left = s.x + s.w;
             }
         }
 
@@ -113,7 +115,10 @@ class Player extends MovingThing {
         }
 
         this.getBounds()
-        if (this.LocX + x + this.Width >= this.Bounds.right || this.LocX + x <= this.Bounds.left) return;
+        // console.log(x, this.LocX, this.Bounds.left); 
+
+        if (this.LocX + this.Width + x > this.Bounds.right) x = this.Bounds.right - (this.LocX + this.Width); 
+        if (this.LocX + x < this.Bounds.left) x = this.Bounds.left - this.LocX;
 
         if (!this.jumping()) {
             this.Frame = (this.Frame++ % (COLORS.length - 2)) + 1;
@@ -168,18 +173,12 @@ const touching = (x1, x2, x3, x4) => {
 }
 
 const redraw = () => {
-    ctx.beginPath();
     ctx.clearRect(0, 0, CANVAS.x, CANVAS.y);
     checkInput();
-    //checkCollision();
 
     player.update();
-    p = player.getState();
-    ctx.rect(p.x, p.y, p.h, p.w);
-    ctx.fillStyle = p.fill;
-    ctx.fill();
 
-    for (let o of objects) {
+    for (let o of [player, ...objects]) {
         ctx.beginPath();
         let l = o.getState();
         ctx.rect(l.x, l.y, l.w, l.h);
@@ -190,10 +189,7 @@ const redraw = () => {
     window.requestAnimationFrame(redraw);
 }
 
-const objects = [
-    new Thing(Math.round(CANVAS.x / 3), CANVAS.y),
-    new Thing(Math.round(CANVAS.x / 2), 3 * Math.round(CANVAS.y / 4)),
-]
+const objects = LEVEL.map(obj => new Thing(obj.x, obj.y));
 
 const player = new Player(CANVAS.x / 2, CANVAS.y / 2);
 
