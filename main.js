@@ -49,17 +49,21 @@ class Thing {
     constructor(x, y, width, height, fill) {
         this.Width = width;
         this.Height = height;
-        this.LocX = x;
-        this.LocY = (CANVAS.y - y) - height;
+        this.Left = x;
+        this.Top = y;
+        this.Bottom = y + height;
+        this.Right = x + width; 
         this.fill = fill;
     }
 
     getState() {
         return {
-            x: this.LocX,
-            y: this.LocY,
-            w: this.Width,
-            h: this.Height,
+            top: this.Top,
+            right: this.Right,
+            bottom: this.Bottom,
+            width: this.Width,
+            height: this.Height,
+            left: this.Left,
             fill: this.fill || COLORS[this.Frame !== undefined ? this.Frame : 4],
         }
     }
@@ -80,6 +84,7 @@ class MovingThing extends Thing {
     walk = () => this.SpeedX = 1;
 
     stop = () => { this.SpeedX = 1; this.Frame = 0; }
+
 }
 
 class Player extends MovingThing {
@@ -88,8 +93,10 @@ class Player extends MovingThing {
         super();
         this.Width = 20;
         this.Height = 20;
-        this.LocX = x - this.Width / 2;
-        this.LocY = y - this.Height / 2;
+        this.Top = y;
+        this.Left = x;
+        this.Bottom = y + this.Height;
+        this.Right = x + this.Width;
         this.Bounds = { top: 0, right: CANVAS.x, bottom: CANVAS.y, left: 0 };
         this.Fill = COLORS[this.Frame];
         this.getBounds();
@@ -100,13 +107,13 @@ class Player extends MovingThing {
 
         for (let o of objects) {
             let s = o.getState();
-            if (touching(this.LocX, this.LocX + this.Width, s.x, s.x + s.w)) {
-                if (this.LocY + this.Height <= s.y && s.y < b.bottom) b.bottom = s.y;
-                if (this.LocY > s.y + s.h && s.y + s.h >= b.top) b.top = s.y + s.h;
+            if (touching(this.Left, this.Right, s.left, s.right)) {
+                if (this.Bottom <= s.top && s.top < b.bottom) b.bottom = s.top;
+                if (this.Top > s.bottom && s.bottom >= b.top) b.top = s.bottom;
             }
-            if (touching(this.LocY, this.LocY + this.Height, s.y, s.y + s.h)) {
-                if (this.LocX + this.Width <= s.x && s.x < b.right) b.right = s.x;
-                if (this.LocX >= s.x + s.w && s.x + s.w > b.left) b.left = s.x + s.w;
+            if (touching(this.Top, this.Bottom, s.top, s.bottom)) {
+                if (this.Right <= s.left && s.left < b.right) b.right = s.left;
+                if (this.Left >= s.right && s.right > b.left) b.left = s.right;
             }
         }
 
@@ -124,29 +131,30 @@ class Player extends MovingThing {
 
         this.getBounds()
 
-        if (this.LocX + this.Width + x > this.Bounds.right) x = this.Bounds.right - (this.LocX + this.Width);
-        if (this.LocX + x < this.Bounds.left) x = this.Bounds.left - this.LocX;
+        if (this.Right + x > this.Bounds.right) x = this.Bounds.right - this.Right;
+        if (this.Left + x < this.Bounds.left) x = this.Bounds.left - this.Left;
 
         if (!this.jumping()) {
             this.Frame = (this.Frame++ % (COLORS.length - 2)) + 1;
         }
-        this.LocX += x;
-        this.LocY += y;
+        this.coords(this.Left + x, this.Top + y);
     }
 
-    jumping = () => this.LocY + this.Height < this.Bounds.bottom;
+    coords = (x,y) => { this.Left = x; this.Top = y; this.Right = x + this.Width; this.Bottom = y + this.Height; }
+
+    jumping = () => this.Bottom < this.Bounds.bottom;
 
     jump = () => {
-        
+
         if (this.JumpBoost > 0) {
             this.JumpBoost -= GRAVITY;
             this.SpeedY -= GRAVITY;
         }
 
-        if (this.LocY + this.Height != this.Bounds.bottom) return;
+        if (this.Bottom != this.Bounds.bottom) return;
         this.JumpBoost = JUMPHEIGHT * 2;
         this.SpeedY = -JUMPHEIGHT;
-        this.LocY--;
+        this.coords(this.Left, this.Top-1)
     }
 
     update = () => {
@@ -156,15 +164,17 @@ class Player extends MovingThing {
 
             if (this.SpeedY < MAXSPEED) this.SpeedY += GRAVITY;
 
-            if (this.LocY + this.SpeedY < this.Bounds.top) {
-                this.LocY = this.Bounds.top;
+            if (this.Top + this.SpeedY < this.Bounds.top) {
+                this.Top = this.Bounds.top;
+                this.Bottom = this.Top + this.Height;
                 this.SpeedY = 0;
             }
-            else
-                this.LocY += this.SpeedY;
+            else {
+                this.coords(this.Left, this.Top + this.SpeedY);
+            }
 
-            if (this.LocY + this.Height + this.SpeedY >= this.Bounds.bottom) {
-                this.LocY = this.Bounds.bottom - this.Height;
+            if (this.Bottom + this.SpeedY >= this.Bounds.bottom) {
+                this.coords(this.Left, this.Bounds.bottom - this.Height);
                 this.SpeedY = 0;
                 this.Frame = 0;
             }
@@ -187,7 +197,7 @@ const redraw = () => {
     for (let o of [player, ...objects]) {
         ctx.beginPath();
         let l = o.getState();
-        ctx.rect(l.x, l.y, l.w, l.h);
+        ctx.rect(l.left, l.top, l.width, l.height);
         ctx.fillStyle = l.fill;
         ctx.fill();
     }
