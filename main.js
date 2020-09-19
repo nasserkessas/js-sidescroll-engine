@@ -22,8 +22,11 @@ const LEVEL = [
     { x: 550, y: 7 / 10 * CANVAS.y, width: 100, height: 25, color: "brown" }, //platform
     { x: 300, y: 5 / 10 * CANVAS.y, width: 75, height: 25, color: "brown" }, //platform
     { x: 650, y: 4 / 10 * CANVAS.y, width: 150, height: 25, color: "brown" }, //platform
-    { x: 100, y: 3 / 10 * CANVAS.y, width: 100, height: 25, color: "brown" }, //platform
-    { x: 650, y: 4 / 10 * CANVAS.y + 25, width: 20, height: 20, color: "gold", type: "goal" }  //goal
+    { x: 00, y: 5 / 10 * CANVAS.y, width: 100, height: 25, color: "brown" }, //platform
+    { x: 100, y: 2 / 10 * CANVAS.y, width: 100, height: 25, color: "brown" }, //platform
+    { x: 80, y: 3 / 10 * CANVAS.y + 25, width: 50, height: 20, color: "brown" }, //platform
+
+    { x: 700, y: 4 / 10 * CANVAS.y + 25, width: 20, height: 20, color: "gold", type: "goal" }  //goal
 ];
 
 const checkInput = () => {
@@ -127,14 +130,14 @@ class Player extends MovingThing {
         if (!this.jumping()) {
             this.Frame = (this.Frame++ % (COLORS.length - 2)) + 1;
         }
-        this.LocX += Math.round(x);
-        this.LocY += Math.round(y);
+        this.LocX += x;
+        this.LocY += y;
     }
 
     jumping = () => this.LocY + this.Height < this.Bounds.bottom;
 
     jump = () => {
-
+        
         if (this.JumpBoost > 0) {
             this.JumpBoost -= GRAVITY;
             this.SpeedY -= GRAVITY;
@@ -153,12 +156,12 @@ class Player extends MovingThing {
 
             if (this.SpeedY < MAXSPEED) this.SpeedY += GRAVITY;
 
-            if (this.LocY + Math.round(this.SpeedY) < this.Bounds.top) {
+            if (this.LocY + this.SpeedY < this.Bounds.top) {
                 this.LocY = this.Bounds.top;
                 this.SpeedY = 0;
             }
             else
-                this.LocY += Math.round(this.SpeedY);
+                this.LocY += this.SpeedY;
 
             if (this.LocY + this.Height + this.SpeedY >= this.Bounds.bottom) {
                 this.LocY = this.Bounds.bottom - this.Height;
@@ -168,7 +171,6 @@ class Player extends MovingThing {
         }
     }
 }
-
 
 const touching = (x1, x2, x3, x4) => {
     if (x1 >= x3 && x1 <= x4) return true;
@@ -189,23 +191,7 @@ const redraw = () => {
         ctx.fillStyle = l.fill;
         ctx.fill();
     }
-    // BEWARE NASSER'S CODE HERE --- EYE GOUCHING AREA
-    // let goals = objects.filter(o => o.type === "goal")
-    // for (goal in goals) {
-    //     // if (touching(player.LocX, player.LocX + player.Width, goal.x, goal.x + goal.Width)){
-    //         console.log(`(${player.LocX}, ${player.LocX + player.Width}), ${goal.x}, ${goal.x + goal.Width}`)
-    //     // }
-    // }
 
-
-
-    // for (let o of objects) {
-    //     if (o.type === "goal") goals.push(o)
-    // }
-    // for (let goal of goals) {
-    //     if (touching(player.LocX, player.LocX + player.Width, goal.x, goal.x + goal.Width)) console.log("touched a goal")
-    // }
-    //
     window.requestAnimationFrame(redraw);
 }
 
