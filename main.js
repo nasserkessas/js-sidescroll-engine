@@ -189,7 +189,23 @@ const redraw = () => {
         ctx.fillStyle = l.fill;
         ctx.fill();
     }
+    // BEWARE NASSER'S CODE HERE --- EYE GOUCHING AREA
+    // let goals = objects.filter(o => o.type === "goal")
+    // for (goal in goals) {
+    //     // if (touching(player.LocX, player.LocX + player.Width, goal.x, goal.x + goal.Width)){
+    //         console.log(`(${player.LocX}, ${player.LocX + player.Width}), ${goal.x}, ${goal.x + goal.Width}`)
+    //     // }
+    // }
 
+
+
+    // for (let o of objects) {
+    //     if (o.type === "goal") goals.push(o)
+    // }
+    // for (let goal of goals) {
+    //     if (touching(player.LocX, player.LocX + player.Width, goal.x, goal.x + goal.Width)) console.log("touched a goal")
+    // }
+    //
     window.requestAnimationFrame(redraw);
 }
 
