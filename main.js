@@ -17,18 +17,23 @@ const LEFT = 0;
 const RIGHT = 1;
 const COLORS = ["black", "green", "yellow", "orange", "orangered", "red", "blue", "purple"];
 const LEVEL = [
-    // { x: 0, y: 0, width: CANVAS.x/3, height: 25, color: "brown" }, //ground
-
-    { x: 0, y: 0, width: CANVAS.x, height: 25, color: "brown" }, //grass
-    { x: 0, y: 25, width: CANVAS.x, height: 7, color: "#60ff30" }, //ground
+    { x: 0, y: 0, width: CANVAS.x, height: 25, color: "brown" }, //ground
+    { x: 0, y: 25, width: CANVAS.x, height: 7, color: "#60ff30" }, //grass
     { x: 550, y: 7 / 10 * CANVAS.y, width: 100, height: 25, color: "brown" }, //platform
     { x: 300, y: 5 / 10 * CANVAS.y, width: 75, height: 25, color: "brown" }, //platform
     { x: 650, y: 4 / 10 * CANVAS.y, width: 150, height: 25, color: "brown" }, //platform
-    { x: 00, y: 5 / 10 * CANVAS.y, width: 100, height: 25, color: "brown" }, //platform
-    { x: 100, y: 90, width: 100, height: 25, color: "brown" }, //platform
-    { x: 80, y: 3 / 10 * CANVAS.y + 25, width: 50, height: 20, color: "brown" }, //platform
+    { x: 0, y: 5 / 10 * CANVAS.y, width: 100, height: 25, color: "brown" }, //platform
+    { x: 150, y: 8 / 10 * CANVAS.y, width: 100, height: 25, color: "brown" }, //platform
+    { x: 100, y: 5 / 10 * CANVAS.y, width: 25, height: 100, color: "brown" }, //vertical platform
+    { x: 100, y: 5 / 10 * CANVAS.y, width: 25, height: 100, color: "brown" }, //vertical platform
+    { x: 450, y: 3 / 10 * CANVAS.y, width: 25, height: 50, color: "brown" }, //vertical platform
+    { x: 550, y: 3 / 10 * CANVAS.y, width: 25, height: 50, color: "brown" }, //vertical platform
+    { x: 450, y: 3 / 10 * CANVAS.y, width: 100, height: 25, color: "brown" }, //platform
+    { x: 100, y: 2 / 10 * CANVAS.y, width: 100, height: 25, color: "brown" }, //platform
+    { x: 700, y: 4 / 10 * CANVAS.y + 25, width: 20, height: 20, color: "gold", type: "goal" },  //goal
+    { x: 80, y: 5 / 10 * CANVAS.y + 25, width: 20, height: 20, color: "gold", type: "goal" },  //goal
+    { x: 80, y: 32, width: 20, height: 20, color: "red", type: "baddy" },  //goal
 
-    { x: 700, y: 4 / 10 * CANVAS.y + 25, width: 20, height: 20, color: "gold", type: "goal" }  //goal
 ];
 
 const checkInput = () => {
@@ -58,6 +63,8 @@ class Thing {
         this.fill = fill;
     }
 
+    coords = (x, y) => { this.Left = x; this.Top = y; this.Right = x + this.Width; this.Bottom = y - this.Height; }
+
     getState() {
         return {
             top: this.Top,
@@ -81,12 +88,58 @@ class MovingThing extends Thing {
         this.JumpBoost = 0;
     }
 
+    getBounds = (objs) => {
+        let b = { top: CANVAS.y, right: CANVAS.x, bottom: 0, left: 0 };
+
+        for (let o of objs) {
+            let s = o.getState();
+            if (touching(this.Left, this.Right, s.left, s.right)) {
+                if (this.Bottom >= s.top && s.top > b.bottom) b.bottom = s.top;
+                if (this.Top < s.bottom && s.bottom <= b.top) b.top = s.bottom;
+            }
+            if (touching(this.Bottom, this.Top, s.bottom, s.top)) {
+                if (this.Right <= s.left && s.left < b.right) b.right = s.left;
+                if (this.Left >= s.right && s.right > b.left) b.left = s.right;
+            }
+        }
+        this.Bounds = b;
+    }
+
     run = () => this.SpeedX = 1.5;
 
     walk = () => this.SpeedX = 1;
 
     stop = () => { this.SpeedX = 1; this.Frame = 0; }
 
+}
+
+class Baddy extends MovingThing {
+
+    constructor(x, y, w, h, f) {
+        super();
+        this.Width = w;
+        this.Height = h;
+        this.Top = y + this.Height;
+        this.Left = x;
+        this.Bottom = y;
+        this.Right = x + this.Width;
+        this.Bounds = { top: CANVAS.y, right: CANVAS.x, bottom: 0, left: 0 };
+        this.fill = f;// || COLORS[this.Frame];
+        this.Direction = LEFT;
+        this.Speed = 1;
+    }
+
+    update = () => {
+        this.getBounds([player, ...objects, ...baddies]);
+        if (this.Direction === LEFT) {
+            if (this.Bounds.left >= this.Left) { this.Direction = RIGHT; return; }
+            this.coords(this.Left - this.Speed, this.Top);
+        }
+        if (this.Direction === RIGHT) {
+            if (this.Bounds.right <= this.Right) { this.Direction = LEFT; return; }
+            this.coords(this.Left + this.Speed, this.Top);
+        }
+    }
 }
 
 class Player extends MovingThing {
@@ -101,26 +154,9 @@ class Player extends MovingThing {
         this.Right = x + this.Width;
         this.Bounds = { top: CANVAS.y, right: CANVAS.x, bottom: 0, left: 0 };
         this.Fill = COLORS[this.Frame];
-        this.getBounds();
+        this.getBounds([...objects, ...baddies])
     }
 
-    getBounds = () => {
-        let b = { top: CANVAS.y, right: CANVAS.x, bottom: 0, left: 0 };
-
-        for (let o of objects) {
-            let s = o.getState();
-            if (touching(this.Left, this.Right, s.left, s.right)) {
-                if (this.Bottom >= s.top && s.top > b.bottom) b.bottom = s.top;
-                if (this.Top < s.bottom && s.bottom <= b.top) b.top = s.bottom;
-            }
-            if (touching(this.Bottom, this.Top, s.bottom, s.top)) {
-                if (this.Right <= s.left && s.left < b.right) b.right = s.left;
-                if (this.Left >= s.right && s.right > b.left) b.left = s.right;
-            }
-        }
-
-        this.Bounds = b;
-    }
 
     move = (direction) => {
         let x = 0;
@@ -130,7 +166,7 @@ class Player extends MovingThing {
             case RIGHT: x = MOVEX * this.SpeedX; break;
         }
 
-        this.getBounds()
+        this.getBounds([...objects, ...baddies])
         if (this.Right + x > this.Bounds.right) x = this.Bounds.right - this.Right;
         if (this.Left + x < this.Bounds.left) x = this.Bounds.left - this.Left;
 
@@ -139,8 +175,6 @@ class Player extends MovingThing {
         }
         this.coords(this.Left + x, this.Top);
     }
-
-    coords = (x, y) => { this.Left = x; this.Top = y; this.Right = x + this.Width; this.Bottom = y - this.Height; }
 
     jumping = () => this.Bottom > this.Bounds.bottom;
 
@@ -159,6 +193,7 @@ class Player extends MovingThing {
 
     update = () => {
 
+        this.getBounds([...objects, ...baddies])
         if (this.jumping()) {
 
             this.Frame = COLORS.length - 1;
@@ -190,9 +225,10 @@ const redraw = () => {
     ctx.clearRect(0, 0, CANVAS.x, CANVAS.y);
     checkInput();
 
-    player.update();
 
-    for (let o of [player, ...objects]) {
+    for (let o of [player, ...objects, ...baddies]) {
+        o.update && o.update();
+
         ctx.beginPath();
         let l = o.getState();
         ctx.rect(l.left, CANVAS.y - l.top, l.width, l.height);
@@ -203,7 +239,13 @@ const redraw = () => {
     window.requestAnimationFrame(redraw);
 }
 
-const objects = LEVEL.map(obj => new Thing(obj.x, obj.y, obj.width, obj.height, obj.color));
+const baddies = LEVEL
+    .filter(obj => obj.type === "baddy")
+    .map(obj => new Baddy(obj.x, obj.y, obj.width, obj.height, obj.color));
+
+const objects = LEVEL
+    .filter(obj => obj.type !== "baddy")
+    .map(obj => new Thing(obj.x, obj.y, obj.width, obj.height, obj.color));
 
 const player = new Player(CANVAS.x / 2, CANVAS.y / 2);
 
