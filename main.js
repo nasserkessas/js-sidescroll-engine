@@ -1,6 +1,6 @@
 const MOVEX = 2;
 const CANVAS = { x: 800, y: 450, o: 0 };
-const LEVEL = { x: 1200, y: 450 };
+const LEVEL = { x: 1600, y: 450 };
 const GRAVITY = -.2;
 const MAXSPEED = 10;
 const JUMPHEIGHT = 3.5;
@@ -171,8 +171,14 @@ class Player extends MovingThing {
 
 
         switch (direction) {
-            case LEFT: x = -MOVEX * this.SpeedX; if (CANVAS.o > 0) CANVAS.o += x; break;
-            case RIGHT: x = MOVEX * this.SpeedX; if (CANVAS.o + CANVAS.x < LEVEL.x) CANVAS.o += x; break;
+            case LEFT: 
+                x = -MOVEX * this.SpeedX;
+                if ((this.Left < CANVAS.o + CANVAS.x/2) && CANVAS.o > 0) CANVAS.o += x;
+                break;
+            case RIGHT: 
+                x = MOVEX * this.SpeedX;
+                if ((this.Left > CANVAS.o + CANVAS.x/2) && CANVAS.o + CANVAS.x < LEVEL.x) CANVAS.o += x;
+                break;
         }
 
         this.getBounds([...objects, ...baddies])
