@@ -11,6 +11,7 @@ const KEYMAP = {
     39: 'right',
     40: 'down',
     16: 'shift',
+    115: 's',
 };
 
 const LEFT = 0;
@@ -33,14 +34,17 @@ const LEVEL = [
     { x: 700, y: 4 / 10 * CANVAS.y + 25, width: 20, height: 20, color: "gold", type: "goal" },  //goal
     { x: 80, y: 5 / 10 * CANVAS.y + 25, width: 20, height: 20, color: "gold", type: "goal" },  //goal
     { x: 80, y: 32, width: 20, height: 20, color: "red", type: "baddy" },  //goal
+    { x: 160, y: 32, width: 20, height: 20, color: "red", type: "baddy" },  //goal
+
 
 ];
 
 const checkInput = () => {
     KEYDOWN['shift'] && player.run();
-    (KEYDOWN['up'] || KEYDOWN['space']) && player.jump();
+    KEYDOWN['space'] && player.jump();
     KEYDOWN['left'] && player.move(LEFT);
     KEYDOWN['right'] && player.move(RIGHT);
+    KEYDOWN['s'] && player.dumpStats();
 };
 
 const resetInput = (key) => {
@@ -62,7 +66,7 @@ class Thing {
     }
 
     coords = (x, y) => { this.Left = x; this.Top = y; this.Right = x + this.Width; this.Bottom = y - this.Height; }
-    
+
     getState() {
         return {
             top: this.Top,
@@ -79,8 +83,10 @@ class Thing {
 
 class MovingThing extends Thing {
 
-    constructor(x,y,w,h,f) {
-        super(x,y,w,h,f);
+    Frame = 0;
+
+    constructor(x, y, w, h, f) {
+        super(x, y, w, h, f);
         this.SpeedY = 0;
         this.SpeedX = 1;
         this.JumpBoost = 0;
@@ -109,14 +115,14 @@ class MovingThing extends Thing {
 
     walk = () => this.SpeedX = 1;
 
-    stop = () => { this.SpeedX = 1; this.setFrame(0);}
+    stop = () => { this.SpeedX = 1; this.setFrame(0); }
 
 }
 
 class Baddy extends MovingThing {
 
     constructor(x, y, w, h, f) {
-        super(x,y,w,h,f);
+        super(x, y, w, h, f);
         this.Top = y + this.Height;
         this.Left = x;
         this.Bottom = y;
@@ -126,6 +132,8 @@ class Baddy extends MovingThing {
     }
 
     update = () => {
+        this.setFrame((this.Frame++ % (COLORS.length - 2)) + 1);
+
         this.getBounds([player, ...objects, ...baddies]);
         if (this.Direction === LEFT) {
             if (this.Bounds.left >= this.Left) { this.Direction = RIGHT; return; }
@@ -141,7 +149,7 @@ class Baddy extends MovingThing {
 class Player extends MovingThing {
 
     constructor(x, y) {
-        super(x,y,20,20,COLORS[0]);
+        super(x, y, 20, 20, COLORS[0]);
         this.Top = y + this.Height;
         this.Left = x;
         this.Bottom = y;
@@ -168,6 +176,10 @@ class Player extends MovingThing {
     }
 
     jumping = () => this.Bottom > this.Bounds.bottom;
+
+    dumpStats = () => {
+        console.log({ bounds: this.Bounds, loc: { right: this.Right, left: this.Left, top: this.Top, bottom: this.Bottom}});
+    }
 
     jump = () => {
 
@@ -207,8 +219,8 @@ class Player extends MovingThing {
 }
 
 const touching = (x1, x2, x3, x4) => {
-    if (x1 >= x3 && x1 <= x4) return true;
-    if (x2 >= x3 && x2 <= x4) return true;
+    if (x1 > x3 && x1 <= x4) return true;
+    if (x2 > x3 && x2 <= x4) return true;
     return false;
 }
 
@@ -244,6 +256,11 @@ document.addEventListener('keydown', (e) => KEYDOWN[KEYMAP[e.which]] = true);
 document.addEventListener('keyup', (e) => {
     KEYDOWN[KEYMAP[e.which]] = false;
     resetInput(KEYMAP[e.which]);
+});
+document.addEventListener('keypress', (e) => {
+    switch (e.which) {
+        case 115: player.dumpStats(); break;
+    }
 });
 
 const canvas = document.querySelector("#canvas")
