@@ -197,6 +197,7 @@ class Player extends MovingThing {
     update = () => {
 
         this.getBounds([...objects, ...baddies])
+
         if (this.jumping()) {
 
             this.setFrame(COLORS.length - 1);
@@ -206,6 +207,7 @@ class Player extends MovingThing {
             if (this.Top + this.SpeedY > this.Bounds.top) {
                 this.coords(this.Left, this.Bounds.top);
                 this.SpeedY = 0;
+                this.JumpBoost = 0;
             }
             this.coords(this.Left, this.Top + this.SpeedY);
 
