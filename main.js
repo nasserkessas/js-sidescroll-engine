@@ -1,5 +1,6 @@
 const MOVEX = 2;
-const CANVAS = { x: 800, y: 450 };
+const CANVAS = { x: 800, y: 450, o: 0 };
+const LEVEL = { x: 1200, y: 450 };
 const GRAVITY = -.2;
 const MAXSPEED = 10;
 const JUMPHEIGHT = 3.5;
@@ -17,24 +18,25 @@ const KEYMAP = {
 const LEFT = 0;
 const RIGHT = 1;
 const COLORS = ["black", "green", "yellow", "orange", "orangered", "red", "blue", "purple"];
-const LEVEL = [
-    { x: 0, y: 0, width: CANVAS.x, height: 25, color: "brown" }, //ground
-    { x: 0, y: 25, width: CANVAS.x, height: 7, color: "#60ff30" }, //grass
-    { x: 550, y: 7 / 10 * CANVAS.y, width: 100, height: 25, color: "brown" }, //platform
-    { x: 300, y: 5 / 10 * CANVAS.y, width: 75, height: 25, color: "brown" }, //platform
-    { x: 650, y: 4 / 10 * CANVAS.y, width: 150, height: 25, color: "brown" }, //platform
-    { x: 0, y: 5 / 10 * CANVAS.y, width: 100, height: 25, color: "brown" }, //platform
-    { x: 150, y: 8 / 10 * CANVAS.y, width: 100, height: 25, color: "brown" }, //platform
-    { x: 100, y: 5 / 10 * CANVAS.y, width: 25, height: 100, color: "brown" }, //vertical platform
-    { x: 100, y: 5 / 10 * CANVAS.y, width: 25, height: 100, color: "brown" }, //vertical platform
-    { x: 450, y: 3 / 10 * CANVAS.y, width: 25, height: 50, color: "brown" }, //vertical platform
-    { x: 550, y: 3 / 10 * CANVAS.y, width: 25, height: 50, color: "brown" }, //vertical platform
-    { x: 450, y: 3 / 10 * CANVAS.y, width: 100, height: 25, color: "brown" }, //platform
-    { x: 100, y: 2 / 10 * CANVAS.y, width: 100, height: 25, color: "brown" }, //platform
+const THINGS = [
+    { x: 0, y: 0, width: LEVEL.x, height: 25, color: "brown", type: "platform" }, //ground
+    { x: 0, y: 25, width: LEVEL.x, height: 7, color: "#60ff30", type: "grass" }, //grass
+    { x: 550, y: 7 / 10 * CANVAS.y, width: 100, height: 25, color: "brown", type: "platform" }, //platform
+    { x: 300, y: 5 / 10 * CANVAS.y, width: 75, height: 25, color: "brown", type: "platform" }, //platform
+    { x: 650, y: 4 / 10 * CANVAS.y, width: 150, height: 25, color: "brown", type: "platform" }, //platform
+    { x: 0, y: 5 / 10 * CANVAS.y, width: 100, height: 25, color: "brown", type: "platform" }, //platform
+    { x: 150, y: 8 / 10 * CANVAS.y, width: 100, height: 25, color: "brown", type: "platform" }, //platform
+    { x: 100, y: 5 / 10 * CANVAS.y, width: 25, height: 100, color: "brown", type: "platform" }, //vertical platform
+    { x: 450, y: 3 / 10 * CANVAS.y, width: 25, height: 50, color: "brown", type: "platform" }, //vertical platform
+    { x: 550, y: 3 / 10 * CANVAS.y, width: 25, height: 50, color: "brown", type: "platform" }, //vertical platform
+    { x: 650, y: 4 / 10 * CANVAS.y, width: 25, height: 160, color: "brown", type: "platform" }, //vertical platform
+    { x: 450, y: 3 / 10 * CANVAS.y, width: 100, height: 25, color: "brown", type: "platform" }, //platform
+    { x: 100, y: 2 / 10 * CANVAS.y, width: 100, height: 25, color: "brown", type: "platform" }, //platform
     { x: 700, y: 4 / 10 * CANVAS.y + 25, width: 20, height: 20, color: "gold", type: "goal" },  //goal
     { x: 80, y: 5 / 10 * CANVAS.y + 25, width: 20, height: 20, color: "gold", type: "goal" },  //goal
-    { x: 80, y: 32, width: 20, height: 20, color: "red", type: "baddy" },  //goal
-    { x: 160, y: 32, width: 20, height: 20, color: "red", type: "baddy" },  //goal
+    { x: 505, y: 3 / 10 * CANVAS.y + 25, width: 20, height: 20, color: "gold", type: "goal" },  //goal
+    { x: 80, y: 32, width: 20, height: 20, color: "red", type: "baddy" },  //baddy
+    { x: 160, y: 32, width: 20, height: 20, color: "red", type: "baddy" },  //baddy
 
 
 ];
@@ -42,8 +44,8 @@ const LEVEL = [
 const checkInput = () => {
     KEYDOWN['shift'] && player.run();
     KEYDOWN['space'] && player.jump();
-    KEYDOWN['left'] && player.move(LEFT);
     KEYDOWN['right'] && player.move(RIGHT);
+    KEYDOWN['left'] && player.move(LEFT);
     KEYDOWN['s'] && player.dumpStats();
 };
 
@@ -80,6 +82,19 @@ class Thing {
     }
 }
 
+class Platform extends Thing {
+    constructor(x, y, w, h, f) {
+        super(x, y, w, h, f);
+        this.Width = w;
+        this.Height = h || 25
+        this.Top = y + this.Height;
+        this.Left = x;
+        this.Bottom = y;
+        this.Right = x + this.Width;
+        this.Fill = f || "brown";
+    }
+}
+
 
 class MovingThing extends Thing {
 
@@ -95,7 +110,7 @@ class MovingThing extends Thing {
     setFrame = f => { this.Frame = f; this.Fill = COLORS[f] }
 
     getBounds = (objs) => {
-        let b = { top: CANVAS.y, right: CANVAS.x, bottom: 0, left: 0 };
+        let b = { top: LEVEL.y, right: LEVEL.x, bottom: 0, left: 0 };
 
         for (let o of objs) {
             let s = o.getState();
@@ -134,7 +149,7 @@ class Baddy extends MovingThing {
     update = () => {
         this.setFrame((this.Frame++ % (COLORS.length - 2)) + 1);
 
-        this.getBounds([player, ...objects, ...baddies]);
+        this.getBounds([player, ...objects, ...baddies, ...platforms]);
         if (this.Direction === LEFT) {
             if (this.Bounds.left >= this.Left) { this.Direction = RIGHT; return; }
             this.coords(this.Left - this.Speed, this.Top);
@@ -161,11 +176,11 @@ class Player extends MovingThing {
         let x = 0;
 
         switch (direction) {
-            case LEFT: x = -MOVEX * this.SpeedX; break;
-            case RIGHT: x = MOVEX * this.SpeedX; break;
+            case LEFT: x = -MOVEX * this.SpeedX; if (CANVAS.o > 0) CANVAS.o += x; console.log("going left and canvas offset is greater than 0"); break;
+            case RIGHT: x = MOVEX * this.SpeedX; if (CANVAS.o + CANVAS.x < LEVEL.x) CANVAS.o += x; console.log("going right and canvas offset and canvas width is less than the level width"); break;
         }
 
-        this.getBounds([...objects, ...baddies])
+        this.getBounds([...objects, ...baddies, ...platforms])
         if (this.Right + x > this.Bounds.right) x = this.Bounds.right - this.Right;
         if (this.Left + x < this.Bounds.left) x = this.Bounds.left - this.Left;
 
@@ -178,7 +193,7 @@ class Player extends MovingThing {
     jumping = () => this.Bottom > this.Bounds.bottom;
 
     dumpStats = () => {
-        console.log({ bounds: this.Bounds, loc: { right: this.Right, left: this.Left, top: this.Top, bottom: this.Bottom}});
+        console.log({ bounds: this.Bounds, loc: { right: this.Right, left: this.Left, top: this.Top, bottom: this.Bottom } });
     }
 
     jump = () => {
@@ -196,7 +211,7 @@ class Player extends MovingThing {
 
     update = () => {
 
-        this.getBounds([...objects, ...baddies])
+        this.getBounds([...objects, ...baddies, ...platforms])
 
         if (this.jumping()) {
 
@@ -231,12 +246,12 @@ const redraw = () => {
     checkInput();
 
 
-    for (let o of [player, ...objects, ...baddies]) {
+    for (let o of [player, ...objects, ...baddies, ...platforms]) {
         o.update && o.update();
 
         ctx.beginPath();
         let l = o.getState();
-        ctx.rect(l.left, CANVAS.y - l.top, l.width, l.height);
+        ctx.rect(l.left - CANVAS.o, CANVAS.y - l.top, l.width, l.height);
         ctx.fillStyle = l.fill;
         ctx.fill();
     }
@@ -244,13 +259,17 @@ const redraw = () => {
     window.requestAnimationFrame(redraw);
 }
 
-const baddies = LEVEL
+const baddies = THINGS
     .filter(obj => obj.type === "baddy")
     .map(obj => new Baddy(obj.x, obj.y, obj.width, obj.height, obj.color));
 
-const objects = LEVEL
-    .filter(obj => obj.type !== "baddy")
+const objects = THINGS
+    .filter(obj => obj.type === "grass" || obj.type === "goal")
     .map(obj => new Thing(obj.x, obj.y, obj.width, obj.height, obj.color));
+
+const platforms = THINGS
+    .filter(obj => obj.type === "platform")
+    .map(obj => new Platform(obj.x, obj.y, obj.w, obj.h));
 
 const player = new Player(CANVAS.x / 2, CANVAS.y / 2);
 
