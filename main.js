@@ -51,8 +51,6 @@ const resetInput = (key) => {
 
 class Thing {
 
-    Frame = 0;
-
     constructor(x, y, width, height, fill) {
         this.Width = width;
         this.Height = height;
@@ -60,11 +58,11 @@ class Thing {
         this.Top = y + height;
         this.Bottom = y;
         this.Right = x + width;
-        this.fill = fill;
+        this.Fill = fill;
     }
 
     coords = (x, y) => { this.Left = x; this.Top = y; this.Right = x + this.Width; this.Bottom = y - this.Height; }
-
+    
     getState() {
         return {
             top: this.Top,
@@ -73,7 +71,7 @@ class Thing {
             width: this.Width,
             height: this.Height,
             left: this.Left,
-            fill: this.fill || COLORS[this.Frame !== undefined ? this.Frame : 4],
+            fill: this.Fill || COLORS[this.Frame !== undefined ? this.Frame : 4],
         }
     }
 }
@@ -81,12 +79,14 @@ class Thing {
 
 class MovingThing extends Thing {
 
-    constructor() {
-        super();
+    constructor(x,y,w,h,f) {
+        super(x,y,w,h,f);
         this.SpeedY = 0;
         this.SpeedX = 1;
         this.JumpBoost = 0;
     }
+
+    setFrame = f => { this.Frame = f; this.Fill = COLORS[f] }
 
     getBounds = (objs) => {
         let b = { top: CANVAS.y, right: CANVAS.x, bottom: 0, left: 0 };
@@ -109,22 +109,18 @@ class MovingThing extends Thing {
 
     walk = () => this.SpeedX = 1;
 
-    stop = () => { this.SpeedX = 1; this.Frame = 0; }
+    stop = () => { this.SpeedX = 1; this.setFrame(0);}
 
 }
 
 class Baddy extends MovingThing {
 
     constructor(x, y, w, h, f) {
-        super();
-        this.Width = w;
-        this.Height = h;
+        super(x,y,w,h,f);
         this.Top = y + this.Height;
         this.Left = x;
         this.Bottom = y;
         this.Right = x + this.Width;
-        this.Bounds = { top: CANVAS.y, right: CANVAS.x, bottom: 0, left: 0 };
-        this.fill = f;// || COLORS[this.Frame];
         this.Direction = LEFT;
         this.Speed = 1;
     }
@@ -145,16 +141,11 @@ class Baddy extends MovingThing {
 class Player extends MovingThing {
 
     constructor(x, y) {
-        super();
-        this.Width = 20;
-        this.Height = 20;
+        super(x,y,20,20,COLORS[0]);
         this.Top = y + this.Height;
         this.Left = x;
         this.Bottom = y;
         this.Right = x + this.Width;
-        this.Bounds = { top: CANVAS.y, right: CANVAS.x, bottom: 0, left: 0 };
-        this.Fill = COLORS[this.Frame];
-        this.getBounds([...objects, ...baddies])
     }
 
 
@@ -171,7 +162,7 @@ class Player extends MovingThing {
         if (this.Left + x < this.Bounds.left) x = this.Bounds.left - this.Left;
 
         if (!this.jumping()) {
-            this.Frame = (this.Frame++ % (COLORS.length - 2)) + 1;
+            this.setFrame((this.Frame++ % (COLORS.length - 2)) + 1);
         }
         this.coords(this.Left + x, this.Top);
     }
@@ -196,7 +187,7 @@ class Player extends MovingThing {
         this.getBounds([...objects, ...baddies])
         if (this.jumping()) {
 
-            this.Frame = COLORS.length - 1;
+            this.setFrame(COLORS.length - 1);
 
             if (this.SpeedY < MAXSPEED) this.SpeedY += GRAVITY;
 
@@ -209,7 +200,7 @@ class Player extends MovingThing {
             if (this.Bottom + this.SpeedY <= this.Bounds.bottom) {
                 this.coords(this.Left, this.Bounds.bottom + this.Height);
                 this.SpeedY = 0;
-                this.Frame = 0;
+                this.setFrame(0);
             }
         }
     }
