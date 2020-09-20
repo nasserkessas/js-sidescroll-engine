@@ -20,7 +20,7 @@ const RIGHT = 1;
 const COLORS = ["black", "green", "yellow", "orange", "orangered", "red", "blue", "purple"];
 const THINGS = [
     { x: 0, y: 0, width: LEVEL.x, height: 25, color: "brown", type: "platform" }, //ground
-    { x: 0, y: 25, width: LEVEL.x, height: 7, color: "#60ff30", type: "grass" }, //grass
+    { x: 0, y: 25, width: LEVEL.x, height: 7, color: "#60ff30" }, //grass
     { x: 550, y: 7 / 10 * CANVAS.y, width: 100, height: 25, color: "brown", type: "platform" }, //platform
     { x: 300, y: 5 / 10 * CANVAS.y, width: 75, height: 25, color: "brown", type: "platform" }, //platform
     { x: 650, y: 4 / 10 * CANVAS.y, width: 150, height: 25, color: "brown", type: "platform" }, //platform
@@ -83,15 +83,8 @@ class Thing {
 }
 
 class Platform extends Thing {
-    constructor(x, y, w, h, f) {
-        super(x, y, w, h, f);
-        this.Width = w;
-        this.Height = h || 25
-        this.Top = y + this.Height;
-        this.Left = x;
-        this.Bottom = y;
-        this.Right = x + this.Width;
-        this.Fill = f || "brown";
+    constructor(x, y, w, h) {
+        super(x, y, w, h || 25, "brown")
     }
 }
 
@@ -149,7 +142,7 @@ class Baddy extends MovingThing {
     update = () => {
         this.setFrame((this.Frame++ % (COLORS.length - 2)) + 1);
 
-        this.getBounds([player, ...objects, ...baddies, ...platforms]);
+        this.getBounds([player, ...objects, ...baddies]);
         if (this.Direction === LEFT) {
             if (this.Bounds.left >= this.Left) { this.Direction = RIGHT; return; }
             this.coords(this.Left - this.Speed, this.Top);
@@ -175,12 +168,14 @@ class Player extends MovingThing {
     move = (direction) => {
         let x = 0;
 
+
+
         switch (direction) {
-            case LEFT: x = -MOVEX * this.SpeedX; if (CANVAS.o > 0) CANVAS.o += x; console.log("going left and canvas offset is greater than 0"); break;
-            case RIGHT: x = MOVEX * this.SpeedX; if (CANVAS.o + CANVAS.x < LEVEL.x) CANVAS.o += x; console.log("going right and canvas offset and canvas width is less than the level width"); break;
+            case LEFT: x = -MOVEX * this.SpeedX; if (CANVAS.o > 0) CANVAS.o += x; break;
+            case RIGHT: x = MOVEX * this.SpeedX; if (CANVAS.o + CANVAS.x < LEVEL.x) CANVAS.o += x; break;
         }
 
-        this.getBounds([...objects, ...baddies, ...platforms])
+        this.getBounds([...objects, ...baddies])
         if (this.Right + x > this.Bounds.right) x = this.Bounds.right - this.Right;
         if (this.Left + x < this.Bounds.left) x = this.Bounds.left - this.Left;
 
@@ -211,7 +206,7 @@ class Player extends MovingThing {
 
     update = () => {
 
-        this.getBounds([...objects, ...baddies, ...platforms])
+        this.getBounds([...objects, ...baddies])
 
         if (this.jumping()) {
 
@@ -246,7 +241,7 @@ const redraw = () => {
     checkInput();
 
 
-    for (let o of [player, ...objects, ...baddies, ...platforms]) {
+    for (let o of [player, ...objects, ...baddies]) {
         o.update && o.update();
 
         ctx.beginPath();
@@ -264,12 +259,10 @@ const baddies = THINGS
     .map(obj => new Baddy(obj.x, obj.y, obj.width, obj.height, obj.color));
 
 const objects = THINGS
-    .filter(obj => obj.type === "grass" || obj.type === "goal")
+    .filter(obj => obj.type !== "baddy")
     .map(obj => new Thing(obj.x, obj.y, obj.width, obj.height, obj.color));
 
-const platforms = THINGS
-    .filter(obj => obj.type === "platform")
-    .map(obj => new Platform(obj.x, obj.y, obj.w, obj.h));
+// const
 
 const player = new Player(CANVAS.x / 2, CANVAS.y / 2);
 
