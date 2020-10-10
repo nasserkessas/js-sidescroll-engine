@@ -220,15 +220,15 @@ class Player extends MovingThing {
         if (!this.jumpKey && this.jumping()) {
 
             if (this.Left === this.Bounds.left.loc) {
-                if (this.lastJumpedObj?.ID != this.Bounds.left.obj.ID) doJump = true;
+                if (this.lastJumpedObj != this.Bounds.left.obj.ID) doJump = true;
                 // this.move(RIGHT);
-                this.lastJumpedObj = this.Bounds.left.obj;
+                this.lastJumpedObj = this.Bounds.left.obj.ID;
 
             }
             if (this.Right === this.Bounds.right.loc) {
-                if (this.lastJumpedObj?.ID != this.Bounds.right.obj.ID) doJump = true;
+                if (this.lastJumpedObj != this.Bounds.right.obj.ID) doJump = true;
                 // this.move(LEFT);
-                this.lastJumpedObj = this.Bounds.right.obj;
+                this.lastJumpedObj = this.Bounds.right.obj.ID;
             }
 
         }
