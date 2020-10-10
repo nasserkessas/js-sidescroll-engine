@@ -56,6 +56,7 @@ const checkInput = () => {
 const resetInput = (key) => {
     if (key == "right" || key == "left") player.stop();
     if (key == "shift") player.walk();
+    if (key == "space") player.noJump();
 }
 
 
@@ -168,6 +169,7 @@ class Player extends MovingThing {
         this.Left = x;
         this.Bottom = y;
         this.Right = x + this.Width;
+        this.jumpKey = false;
     }
 
 
@@ -202,17 +204,41 @@ class Player extends MovingThing {
         else return false
     }
 
+    noJump = () => this.jumpKey = false;
+
     jump = () => {
+
+        let doJump = false;
 
         if (this.JumpBoost > 0) {
             this.JumpBoost += GRAVITY;
             this.SpeedY -= GRAVITY;
         }
 
-        if (this.Bottom != this.Bounds.bottom.loc) return;
-        this.JumpBoost = JUMPHEIGHT * 2;
-        this.SpeedY = JUMPHEIGHT;
-        this.coords(this.Left, this.Top + 1)
+        if (!this.jumpKey && this.jumping()) {
+            if (this.Left == this.Bounds.left.loc) {
+                console.log("Jumping mid-flight against left wall")
+                doJump = true;
+                this.move(RIGHT);
+
+            }
+            if (this.Right == this.Bounds.right.loc) {
+                console.log("Jumping mid-flight against right wall")
+                doJump = true;
+                this.move(LEFT);
+
+            }
+        }
+
+        this.jumpKey = true;
+
+        if (this.Bottom === this.Bounds.bottom.loc) doJump = true;
+
+        if (doJump) {
+            this.JumpBoost = JUMPHEIGHT * 2;
+            this.SpeedY = JUMPHEIGHT;
+            this.coords(this.Left, this.Top + 1)
+        }
     }
 
     update = () => {
