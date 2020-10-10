@@ -59,6 +59,7 @@ const resetInput = (key) => {
     if (key == "space") player.noJump();
 }
 
+const getID = () => Math.random() * 1024;
 
 class Thing {
 
@@ -70,6 +71,7 @@ class Thing {
         this.Bottom = y;
         this.Right = x + width;
         this.Fill = fill;
+        this.ID = getID();
     }
 
     coords = (x, y) => { this.Left = x; this.Top = y; this.Right = x + this.Width; this.Bottom = y - this.Height; }
@@ -109,7 +111,7 @@ class MovingThing extends Thing {
     setFrame = f => { this.Frame = f; this.Fill = COLORS[f] }
 
     getBounds = (objs) => {
-        let b = { top: { loc: LEVEL.y, obj: { Type: "canvas" } }, right: { loc: LEVEL.x, obj: { Type: "canvas" } }, bottom: { loc: 0, obj: { Type: "canvas" } }, left: { loc: 0, obj: { Type: "canvas" } } };
+        let b = { top: { loc: LEVEL.y, obj: { Type: "canvas", ID: "top" } }, right: { loc: LEVEL.x, obj: { ID: "right", Type: "canvas" } }, bottom: { loc: 0, obj: { ID: "bottom", Type: "canvas" } }, left: { loc: 0, obj: { ID: "left", Type: "canvas" } } };
 
         for (let o of objs) {
             let s = o.getState();
@@ -216,18 +218,19 @@ class Player extends MovingThing {
         }
 
         if (!this.jumpKey && this.jumping()) {
-            if (this.Left == this.Bounds.left.loc) {
-                console.log("Jumping mid-flight against left wall")
-                doJump = true;
-                this.move(RIGHT);
+
+            if (this.Left === this.Bounds.left.loc) {
+                if (this.lastJumpedObj?.ID != this.Bounds.left.obj.ID) doJump = true;
+                // this.move(RIGHT);
+                this.lastJumpedObj = this.Bounds.left.obj;
 
             }
-            if (this.Right == this.Bounds.right.loc) {
-                console.log("Jumping mid-flight against right wall")
-                doJump = true;
-                this.move(LEFT);
-
+            if (this.Right === this.Bounds.right.loc) {
+                if (this.lastJumpedObj?.ID != this.Bounds.right.obj.ID) doJump = true;
+                // this.move(LEFT);
+                this.lastJumpedObj = this.Bounds.right.obj;
             }
+
         }
 
         this.jumpKey = true;
@@ -282,6 +285,7 @@ class Player extends MovingThing {
                 this.coords(this.Left, this.Bounds.bottom.loc + this.Height);
                 this.SpeedY = 0;
                 this.setFrame(0);
+                this.lastJumpedObj = null;
             }
         }
     }
