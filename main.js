@@ -17,10 +17,10 @@ const KEYMAP = {
 
 const LEFT = 0;
 const RIGHT = 1;
-const COLORS = ["black", "green", "yellow", "orange", "orangered", "red", "blue", "purple"];
+const COLORS = ["black", "green", "yellow", "orange", "orangered", "red", "blue", "purple", "cyan"];
 const THINGS = [
     { x: 0, y: 0, width: LEVEL.x, height: 25, color: "brown", type: "platform" }, //ground
-    { x: 0, y: 25, width: LEVEL.x, height: 7, color: "#60ff30" }, //grass
+    { x: 0, y: 25, width: LEVEL.x, height: 7, color: "#60ff30", type: "grass" }, //grass
     { x: 550, y: 7 / 10 * CANVAS.y, width: 100, height: 25, color: "brown", type: "platform" }, //platform
     { x: 300, y: 5.5 / 10 * CANVAS.y, width: 75, height: 25, color: "brown", type: "platform" }, //platform
     { x: 650, y: 4 / 10 * CANVAS.y, width: 150, height: 25, color: "brown", type: "platform" }, //platform
@@ -39,7 +39,7 @@ const THINGS = [
     { x: 505, y: 3 / 10 * CANVAS.y + 25, width: 20, height: 20, color: "gold", type: "goal" },  //goal
     { x: 80, y: 5 / 10 * CANVAS.y + 25, width: 20, height: 20, color: "red", type: "baddy" },  //baddy
     { x: 750, y: 4 / 10 * CANVAS.y + 25, width: 20, height: 20, color: "red", type: "baddy" },  //baddy
-    { x: 80, y: 32, width: 20, height: 20, color: "red", type: "baddy" },  //baddy
+    { x: 80, y: 100, width: 20, height: 20, color: "red", type: "baddy" },  //baddy
     { x: 160, y: 32, width: 20, height: 20, color: "red", type: "baddy" },  //baddy
 
 
@@ -97,27 +97,28 @@ class MovingThing extends Thing {
 
     Frame = 0;
 
-    constructor(x, y, w, h, f) {
+    constructor(x, y, w, h, f, t) {
         super(x, y, w, h, f);
         this.SpeedY = 0;
         this.SpeedX = 1;
         this.JumpBoost = 0;
+        this.Type = t;
     }
 
     setFrame = f => { this.Frame = f; this.Fill = COLORS[f] }
 
     getBounds = (objs) => {
-        let b = { top: LEVEL.y, right: LEVEL.x, bottom: 0, left: 0 };
+        let b = { top: { loc: LEVEL.y, obj: { Type: "canvas" } }, right: { loc: LEVEL.x, obj: { Type: "canvas" } }, bottom: { loc: 0, obj: { Type: "canvas" } }, left: { loc: 0, obj: { Type: "canvas" } } };
 
         for (let o of objs) {
             let s = o.getState();
             if (touching(this.Left, this.Right, s.left, s.right)) {
-                if (this.Bottom >= s.top && s.top > b.bottom) b.bottom = s.top;
-                if (this.Top < s.bottom && s.bottom <= b.top) b.top = s.bottom;
+                if (this.Bottom >= s.top && s.top > b.bottom.loc) { b.bottom.loc = s.top; b.bottom.obj = o };
+                if (this.Top < s.bottom && s.bottom <= b.top.loc) { b.top.loc = s.bottom; b.top.obj = o };
             }
             if (touching(this.Bottom, this.Top, s.bottom, s.top)) {
-                if (this.Right <= s.left && s.left < b.right) b.right = s.left;
-                if (this.Left >= s.right && s.right > b.left) b.left = s.right;
+                if (this.Right <= s.left && s.left < b.right.loc) { b.right.loc = s.left; b.right.obj = o }
+                if (this.Left >= s.right && s.right > b.left.loc) { b.left.loc = s.right; b.left.obj = o }
             }
         }
         this.Bounds = b;
@@ -133,7 +134,7 @@ class MovingThing extends Thing {
 
 class Baddy extends MovingThing {
 
-    constructor(x, y, w, h, f) {
+    constructor(x, y, w, h, f, t) {
         super(x, y, w, h, f);
         this.Top = y + this.Height;
         this.Left = x;
@@ -141,18 +142,19 @@ class Baddy extends MovingThing {
         this.Right = x + this.Width;
         this.Direction = LEFT;
         this.Speed = 1;
+        this.Type = t;
     }
 
     update = () => {
-        this.setFrame((this.Frame++ % (COLORS.length - 2)) + 1);
+        this.setFrame((this.Frame++ % (COLORS.length - 3)) + 1);
 
         this.getBounds([player, ...objects, ...baddies]);
         if (this.Direction === LEFT) {
-            if (this.Bounds.left >= this.Left) { this.Direction = RIGHT; return; }
+            if (this.Bounds.left.loc >= this.Left) { this.Direction = RIGHT; return; }
             this.coords(this.Left - this.Speed, this.Top);
         }
         if (this.Direction === RIGHT) {
-            if (this.Bounds.right <= this.Right) { this.Direction = LEFT; return; }
+            if (this.Bounds.right.loc <= this.Right) { this.Direction = LEFT; return; }
             this.coords(this.Left + this.Speed, this.Top);
         }
     }
@@ -184,20 +186,16 @@ class Player extends MovingThing {
         }
 
         this.getBounds([...objects, ...baddies])
-        if (this.Right + x > this.Bounds.right) x = this.Bounds.right - this.Right;
-        if (this.Left + x < this.Bounds.left) x = this.Bounds.left - this.Left;
+        if (this.Right + x > this.Bounds.right.loc) x = this.Bounds.right.loc - this.Right;
+        if (this.Left + x < this.Bounds.left.loc) x = this.Bounds.left.loc - this.Left;
 
         if (!this.jumping()) {
-            this.setFrame((this.Frame++ % (COLORS.length - 2)) + 1);
+            this.setFrame((this.Frame++ % (COLORS.length) - 2));
         }
         this.coords(this.Left + x, this.Top);
     }
 
-    jumping = () => this.Bottom > this.Bounds.bottom;
-
-    dumpStats = () => {
-        console.log({ bounds: this.Bounds, loc: { right: this.Right, left: this.Left, top: this.Top, bottom: this.Bottom } });
-    }
+    jumping = () => this.Bottom > this.Bounds.bottom.loc;
 
     goingUp = () => {
         if (this.SpeedY > 0) { return true }
@@ -211,7 +209,7 @@ class Player extends MovingThing {
             this.SpeedY -= GRAVITY;
         }
 
-        if (this.Bottom != this.Bounds.bottom) return;
+        if (this.Bottom != this.Bounds.bottom.loc) return;
         this.JumpBoost = JUMPHEIGHT * 2;
         this.SpeedY = JUMPHEIGHT;
         this.coords(this.Left, this.Top + 1)
@@ -223,12 +221,12 @@ class Player extends MovingThing {
 
         if (this.jumping()) {
 
-            this.setFrame(COLORS.length - 1);
+            this.setFrame(COLORS.length - 2);
 
             if (this.SpeedY < MAXSPEED) this.SpeedY += GRAVITY; // if not max speed
 
-            if (this.Top + this.SpeedY > this.Bounds.top) { // if going to hit top bounds
-                this.coords(this.Left, this.Bounds.top);
+            if (this.Top + this.SpeedY > this.Bounds.top.loc) { // if going to hit top bounds
+                this.coords(this.Left, this.Bounds.top.loc);
                 this.SpeedY = 0;
                 this.JumpBoost = 0;
             }
@@ -254,14 +252,11 @@ class Player extends MovingThing {
                 }
             }
 
-
-
-            if (this.Bottom + this.SpeedY <= this.Bounds.bottom) { // if on bottom bounds
-                this.coords(this.Left, this.Bounds.bottom + this.Height);
+            if (this.Bottom + this.SpeedY <= this.Bounds.bottom.loc) { // if on bottom bounds
+                this.coords(this.Left, this.Bounds.bottom.loc + this.Height);
                 this.SpeedY = 0;
                 this.setFrame(0);
             }
-
         }
     }
 }
@@ -292,7 +287,7 @@ const redraw = () => {
 
 const baddies = THINGS
     .filter(obj => obj.type === "baddy")
-    .map(obj => new Baddy(obj.x, obj.y, obj.width, obj.height, obj.color));
+    .map(obj => new Baddy(obj.x, obj.y, obj.width, obj.height, obj.color, obj.type));
 
 const objects = THINGS
     .filter(obj => obj.type !== "baddy")
@@ -306,11 +301,7 @@ document.addEventListener('keyup', (e) => {
     KEYDOWN[KEYMAP[e.which]] = false;
     resetInput(KEYMAP[e.which]);
 });
-document.addEventListener('keypress', (e) => {
-    switch (e.which) {
-        case 115: player.dumpStats(); break;
-    }
-});
+
 
 const canvas = document.querySelector("#canvas")
 const ctx = canvas.getContext("2d");
