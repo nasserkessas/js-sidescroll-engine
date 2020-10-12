@@ -45,6 +45,10 @@ const THINGS = [
 
 ];
 
+const BACKGROUND = [
+    { image: document.getElementById("clouds"), x: 200, y: 0, width: 528, height: 200, },
+];
+
 const checkInput = () => {
     KEYDOWN['shift'] && player.run();
     KEYDOWN['space'] && player.jump();
@@ -301,6 +305,14 @@ const redraw = () => {
     ctx.clearRect(0, 0, CANVAS.x, CANVAS.y);
     checkInput();
 
+    // ctx.beginPath();
+    // ctx.rect(0,0,CANVAS.x,CANVAS.y);
+    // ctx.fillStyle = "#aeccfc";
+    // ctx.fill();
+
+    for (let b of BACKGROUND) {
+        ctx.drawImage(b.image, b.x - CANVAS.offset.x/3, b.y + CANVAS.offset.y/2, b.width, b.height);
+    }
 
     for (let o of [player, ...objects, ...baddies]) {
         o.update && o.update();
