@@ -1,4 +1,5 @@
 # Sidescroll engine
+[![Netlify Status](https://api.netlify.com/api/v1/badges/1c8d0c2e-42f4-4961-9fe0-0108aa286d0c/deploy-status)](https://app.netlify.com/sites/sidescroll-engine-nk/deploys)
 
 ## Overview
 
