@@ -16,9 +16,12 @@ A web-based scrolling game engine with sprite frames made with JS
 
 ## Todo
 - Use Sprites
-- Use a block system rather than pixels for objects
+- Make falling and jumping different
 - Fix clouds
 - Slow sprite frame changing
+- Make player inable to sprint and change direction while airborne
+- Fix simultaneous spriting and jumping colour change bug
+- Make 'Baddies' location block based
 
 ## Acknoledgements
 Created by Nasser Kessas
